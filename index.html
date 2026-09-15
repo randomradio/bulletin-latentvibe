@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>犬猫采食行为视频 AI 多模态分析 POC · 任务发布</title>
+<style>
+  :root {
+    --blue: #1569d8;
+    --blue-dark: #0a2a66;
+    --teal: #13819a;
+    --green: #087a55;
+    --muted: #5d6878;
+    --body: #222a38;
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --line: #d7e2f0;
+    --warn: #b45309;
+    --danger: #b91c1c;
+    --sidebar: 260px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--body);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar);
+    flex-shrink: 0;
+    background: var(--blue-dark);
+    color: #e8eef8;
+    padding: 20px 0 40px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    padding: 8px 20px 18px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    margin-bottom: 12px;
+  }
+  .brand h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.35;
+  }
+  .brand p {
+    margin: 6px 0 0;
+    font-size: 11px;
+    opacity: .75;
+  }
+  .nav-group { margin: 14px 0 4px; padding: 0 20px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .55; }
+  .nav button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    padding: 9px 20px;
+    font-size: 13px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  .nav button:hover { background: rgba(255,255,255,.06); }
+  .nav button.active {
+    background: rgba(21,105,216,.35);
+    border-left-color: #6eb6ff;
+    color: #fff;
+    font-weight: 600;
+  }
+  .main { flex: 1; min-width: 0; }
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 28px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar .meta { font-size: 12px; color: var(--muted); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e8f1fb;
+    color: var(--blue-dark);
+    font-weight: 600;
+  }
+  .chip.ok { background: #e6f6ef; color: var(--green); }
+  .chip.warn { background: #fff4e5; color: var(--warn); }
+  .content { padding: 24px 28px 60px; max-width: 1100px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  h2 { margin: 0 0 12px; font-size: 22px; color: var(--blue-dark); }
+  h3 { margin: 22px 0 8px; font-size: 16px; color: var(--blue); }
+  h4 { margin: 16px 0 6px; font-size: 14px; color: var(--teal); }
+  p, li { font-size: 14px; }
+  .lead { color: var(--muted); margin-top: 0; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 12px 0;
+  }
+  .grid { display: grid; gap: 12px; }
+  .grid.cols-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid.cols-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
+  }
+  .stat { text-align: left; }
+  .stat .n { font-size: 22px; font-weight: 700; color: var(--blue-dark); }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+  th { background: var(--blue); color: #fff; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  details.acc {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin: 8px 0;
+    padding: 0 12px;
+  }
+  details.acc summary {
+    cursor: pointer;
+    padding: 12px 4px;
+    font-weight: 600;
+    color: var(--blue-dark);
+  }
+  .check-list { list-style: none; padding: 0; margin: 0; }
+  .check-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px dashed var(--line);
+  }
+  .check-list li:last-child { border-bottom: 0; }
+  .check-list input { margin-top: 3px; }
+  .wire {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.45;
+    overflow-x: auto;
+    white-space: pre;
+    border: 1px solid #1e293b;
+  }
+  .proto-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .proto-tabs button {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .proto-tabs button.active {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+  }
+  .mock {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    margin-top: 10px;
+  }
+  .mock-bar {
+    background: var(--blue-dark);
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .mock-nav { display: flex; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; background: #f8fafc; }
+  .mock-nav span { padding: 4px 8px; border-radius: 6px; cursor: default; }
+  .mock-nav .on { background: #e8f1fb; color: var(--blue); font-weight: 600; }
+  .mock-body { display: grid; grid-template-columns: 1.3fr 1fr; min-height: 280px; }
+  .mock-player {
+    background: #111827;
+    color: #cbd5e1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .mock-stage {
+    flex: 1;
+    border: 1px dashed #334155;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .zone {
+    position: absolute;
+    right: 18%; bottom: 22%;
+    width: 28%; height: 18%;
+    border: 2px solid rgba(56,189,248,.9);
+    background: rgba(56,189,248,.15);
+    border-radius: 4px;
+    font-size: 10px;
+    color: #7dd3fc;
+    display: grid; place-items: center;
+  }
+  .timeline {
+    height: 54px;
+    background: #0b1220;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 10px;
+  }
+  .track { height: 8px; border-radius: 4px; margin: 3px 0; background: #1f2937; position: relative; }
+  .seg { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+  .mock-side { padding: 12px; font-size: 12px; }
+  .tabs-mini { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tabs-mini button {
+    border: 0; background: #eef2f7; border-radius: 6px; padding: 5px 8px; font-size: 11px; cursor: pointer;
+  }
+  .tabs-mini button.on { background: var(--teal); color: #fff; }
+  .kv { display: grid; grid-template-columns: 88px 1fr; gap: 4px 8px; margin: 6px 0; }
+  .kv b { color: var(--muted); font-weight: 500; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #e6f6ef; color: var(--green); font-size: 11px; font-weight: 600; }
+  .pill.bad { background: #fee2e2; color: var(--danger); }
+  .pill.warn { background: #fff4e5; color: var(--warn); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blue); color: #fff; border: 0; border-radius: 8px;
+    padding: 8px 12px; font-size: 12px; cursor: pointer; font-weight: 600;
+  }
+  .btn.secondary { background: #fff; color: var(--blue-dark); border: 1px solid var(--line); }
+  .footer-note { margin-top: 28px; font-size: 12px; color: var(--muted); }
+  .progress {
+    height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 6px;
+  }
+  .progress > i { display: block; height: 100%; background: var(--blue); width: 0; transition: width .3s; }
+  .todo-done { opacity: .55; text-decoration: line-through; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>采食行为视频 AI POC</h1>
+      <p>交互任务发布 · 研发 / 交付</p>
+    </div>
+    <div class="nav" id="nav">
+      <div class="nav-group">总览</div>
+      <button data-panel="home" class="active">任务首页</button>
+      <div class="nav-group">文档</div>
+      <button data-panel="prd">PRD 需求</button>
+      <button data-panel="exec">执行计划</button>
+      <button data-panel="ui">前端原型</button>
+      <div class="nav-group">验收</div>
+      <button data-panel="accept">门槛与指标</button>
+      <button data-panel="deliver">交付清单</button>
+      <button data-panel="kickoff">Kickoff 检查</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div style="font-weight:700;color:var(--blue-dark)">乖宝 × 汉得 · 犬猫采食行为视频 AI 多模态分析 POC</div>
+        <div class="meta">远程离线 · 10 人天 · ¥50,000（含税 6%）· 文档 V1.0</div>
+      </div>
+      <div class="chips">
+        <span class="chip">7 标签</span>
+        <span class="chip">40 段 A 级盲测</span>
+        <span class="chip ok">答案隔离</span>
+        <span class="chip warn">非生产承诺</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- HOME -->
+      <section class="panel active" id="home">
+        <h2>任务发布首页</h2>
+        <p class="lead">把合同交付整理成可执行任务包：需求（PRD）、实施路径、前端原型、验收门槛。左侧切换模块；清单可勾选，状态保存在本机浏览器。</p>
+        <div class="grid cols-3">
+          <div class="card stat"><div class="n">P0→评分</div><div class="l">四阶段门禁推进</div></div>
+          <div class="card stat"><div class="n">FR × 14</div><div class="l">研发功能需求</div></div>
+          <div class="card stat"><div class="n">G0–G6</div><div class="l">前置门槛后才谈通过</div></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">本期一句话目标</h3>
+          <p>在固定场地 / 主机位 / 食物区域 / 单猫离线视频上，验证自动预标注、4Hz 时间事件、证据留存与人工复核链路；A 级盲测达标则 POC 通过，仅代表可继续工程化，不代表生产能力已验证。</p>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h4 style="margin-top:0">In Scope</h4>
+            <ul>
+              <li>7 标签 + T0 / 采食起止 / 有效区间 / 抬头 / 总时长</li>
+              <li>输入检查、难度分级、版本冻结、盲测批处理</li>
+              <li>证据包 + 评估报告 + 数据管理/单视频验证前端</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4 style="margin-top:0">Out of Scope</h4>
+            <ul>
+              <li>犬类、多猫身份、尾巴/声音/健康异常等</li>
+              <li>实时流、高并发、生产系统集成与 SLA</li>
+              <li>跨场地/机位/品种总体准确率外推</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0">建议阅读顺序</h4>
+          <p>1) PRD → 2) 执行计划 → 3) 前端原型 → 4) 验收门槛 → 5) Kickoff 勾选开工</p>
+          <button class="btn" onclick="showPanel('prd')">从 PRD 开始</button>
+          <button class="btn secondary" onclick="showPanel('ui')">先看前端原型</button>
+        </div>
+      </section>
+
+      <!-- PRD -->
+      <section class="panel" id="prd">
+        <h2>PRD · 研发需求</h2>
+        <p class="lead">研发向产品需求摘要。完整 Word 版可另发；此处突出可开发条目。</p>
+
+        <h3>成功标准</h3>
+        <div class="card">G0–G6 全满足，且 7 标签 / 采食时序 / 抬头 / 证据达到数值门槛 → 结论「通过」。另有「不通过」「测试无效」。</div>
+
+        <h3>功能需求</h3>
+        <table>
+          <thead><tr><th>ID</th><th>功能</th><th>要点</th><th>优先级</th></tr></thead>
+          <tbody>
+            <tr><td>FR-01</td><td>输入检查</td><td>规格/完整性/越界标记</td><td>P0</td></tr>
+            <tr><td>FR-02</td><td>难度分级</td><td>预测前冻结 A/B/C，禁止回改</td><td>P0</td></tr>
+            <tr><td>FR-03</td><td>T0</td><td>鼻部首次进入食物观察区首帧</td><td>P0</td></tr>
+            <tr><td>FR-04</td><td>4Hz 时序</td><td>0.25s；候选窗须带时间戳证据</td><td>P0</td></tr>
+            <tr><td>FR-05</td><td>采食区间</td><td>开始/结束或右截断/区间/总时长</td><td>P0</td></tr>
+            <tr><td>FR-06</td><td>抬头事件</td><td>列表+次数；IoU≥0.5 匹配</td><td>P0</td></tr>
+            <tr><td>FR-07</td><td>7 标签</td><td>缺证据不得默认补齐</td><td>P0</td></tr>
+            <tr><td>FR-08</td><td>无法观察</td><td>显式原因，禁止静默默认值</td><td>P0</td></tr>
+            <tr><td>FR-09</td><td>证据生成</td><td>视频/机位/起止/片段或帧</td><td>P0</td></tr>
+            <tr><td>FR-10</td><td>离线批处理</td><td>冻结版本跑 40 段，失败也留痕</td><td>P0</td></tr>
+            <tr><td>FR-11</td><td>版本冻结</td><td>模型/代码/提示词/环境哈希</td><td>P0</td></tr>
+            <tr><td>FR-12</td><td>自动评分</td><td>按合同门槛出结论材料</td><td>P0</td></tr>
+            <tr><td>FR-13</td><td>前端界面</td><td>数据管理 + 单视频验证</td><td>P0</td></tr>
+            <tr><td>FR-14</td><td>评估报告</td><td>分层统计、限制、下阶段建议</td><td>P0</td></tr>
+          </tbody>
+        </table>
+
+        <h3>事件定义（实现口径）</h3>
+        <details class="acc" open>
+          <summary>T0 / 采食 / 抬头 / 总时长</summary>
+          <ul>
+            <li><b>T0</b>：食物放置完成且猫鼻部第一次进入预先标定食物观察区域的首帧。</li>
+            <li><b>有效采食开始</b>：到达食物区后持续明确的食物导向采食。</li>
+            <li><b>有效采食结束</b>：末次明确采食后 20s 未恢复；不足 20s 则右截断/无法观察。</li>
+            <li><b>抬头</b>：抬头前有有效采食；离区 ≥2s；之后恢复有效采食。</li>
+            <li><b>总时长</b>：各有效区间之和，禁止首末跨度代替。</li>
+          </ul>
+        </details>
+
+        <h3>最小输出 schema（单视频）</h3>
+        <div class="wire">{
+  "video_id": "V-0017",
+  "labels": ["平静进食", "抬头"],
+  "T0": "00:00:08.000",
+  "feed_start": "00:00:12.250",
+  "feed_end_or_right_truncated": "00:00:48.000",
+  "feed_intervals": [{"start":"...","end":"..."}],
+  "headup_events": [{"start":"...","end":"..."}],
+  "headup_count": 2,
+  "feed_total_duration_s": 29.5,
+  "unobservable": null,
+  "evidence": [{ "target": "headup#1", "t_start": "...", "t_end": "...", "uri": "..." }]
+}</div>
+      </section>
+
+      <!-- EXEC -->
+      <section class="panel" id="exec">
+        <h2>执行计划 · 阶段门禁</h2>
+        <p class="lead">按合同服务环节推进。阶段输出签字/电子签后进入下一阶段；书面报告默认 5 个工作日答复。</p>
+        <table>
+          <thead><tr><th>阶段</th><th>关键动作</th><th>输出</th><th>建议人天</th></tr></thead>
+          <tbody>
+            <tr><td><b>P0 就绪</b></td><td>视频/真值/GPU 检查；4Hz 试跑；越界清单</td><td>输入检查、覆盖矩阵、环境预检</td><td>2</td></tr>
+            <tr><td><b>P1 冻结</b></td><td>8–12 校准视频确认定义与参数；冻结版本哈希</td><td>冻结配置包</td><td>2</td></tr>
+            <tr><td><b>P2 盲测</b></td><td>40 段同版本批处理；答案隔离</td><td>结构化结果、日志、证据</td><td>3</td></tr>
+            <tr><td><b>评分评审</b></td><td>对照裁决真值评分；报告与建议</td><td>评分、裁决记录、总结报告</td><td>2+1</td></tr>
+          </tbody>
+        </table>
+        <h3>环境基线（甲方提供 GPU 权限）</h3>
+        <div class="grid cols-2">
+          <div class="card">GPU：H100/H800/A800 ≥80GB（优先 H100）<br/>CPU≥16 核（荐32）· 内存≥96GB · NVMe≥3.84TB</div>
+          <div class="card">Linux · vLLM 0.20.x · CUDA 12.9+<br/>单 VLM 并发；SAM/第二模型/回归串行</div>
+        </div>
+        <p>盲测前必须校准回归并冻结实机快照。A800 等无法复现 NVFP4 时，改用等效可运行配置并回归通过后再盲测。</p>
+        <h3>分工</h3>
+        <table>
+          <thead><tr><th>角色</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td>甲方</td><td>标签/口径确认；校准+40A 盲测+标定+裁决真值；真值隔离；争议复核</td></tr>
+            <tr><td>乙方执行</td><td>环境预检、4Hz、冻结、批处理、证据与报告；如实记录失败/无法观察</td></tr>
+            <tr><td>双方</td><td>临界定义与匹配争议；确认 POC 结论</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- UI -->
+      <section class="panel" id="ui">
+        <h2>前端原型 · 可点选预览</h2>
+        <p class="lead">合同交付：视频数据管理 + 单视频标注/结果验证。以下为交互示意（非生产代码）。</p>
+        <div class="proto-tabs" id="protoTabs">
+          <button class="active" data-proto="dashboard">工作台</button>
+          <button data-proto="dataset">数据集</button>
+          <button data-proto="video">单视频工作台</button>
+          <button data-proto="runs">任务 Runs</button>
+          <button data-proto="report">报告</button>
+        </div>
+
+        <div id="proto-dashboard" class="proto-view">
+          <div class="mock">
+            <div class="mock-bar"><span>采食行为 POC</span><span>freeze: — · 隔离: ON</span></div>
+            <div class="mock-nav"><span class="on">工作台</span><span>数据集</span><span>任务</span><span>报告</span></div>
+            <div style="padding:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px;">
+              <div class="card" style="margin:0"><b>校准</b><div class="progress"><i style="width:80%"></i></div>10/12</div>
+              <div class="card" style="margin:0"><b>盲测</b><div class="progress"><i style="width:100%"></i></div>40/40 齐套</div>
+              <div class="card" style="margin:0"><b>G 门槛</b><div class="progress"><i style="width:30%"></i></div>G0 进行中</div>
+            </div>
+            <div class="card" style="margin:0 14px 14px">待办：GPU 预检未完成 · 标签「拒绝进食」正例仅 6/8 · 2 段完整性失败</div>
+          </div>
+        </div>
+
+        <div id="proto-dataset" class="proto-view" style="display:none">
+          <div class="mock">
+            <div class="mock-bar"><span>数据集 · 盲测 A 级</span><span><button class="btn" style="padding:4px 8px">导入</button></span></div>
+            <div style="padding:10px;font-size:12px;overflow:auto">
+              <table>
+                <thead><tr><th>视频ID</th><th>等级</th><th>检查</th><th>真值</th><th>预测</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>V-0017</td><td>A</td><td><span class="pill">通过</span></td><td>已隔离</td><td>未跑</td><td><a href="#" onclick="switchProto('video');return false;">打开</a></td></tr>
+                  <tr><td>V-0021</td><td>A</td><td><span class="pill bad">缺尾帧</span></td><td>待裁</td><td>未跑</td><td>打开</td></tr>
+                  <tr><td>V-0033</td><td>C</td><td><span class="pill warn">越界·多猫</span></td><td>—</td><td>—</td><td>打开</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="proto-video" class="proto-view" style="display:none">
+          <div class="mock">
+            <div class="mock-bar"><span>V-0017 · 单视频工作台</span><span>预测已出 · 真值隔离中</span></div>
+            <div class="mock-body">
+              <div class="mock-player">
+                <div class="mock-stage">
+                  <div>视频画面</div>
+                  <div class="zone">食物观察区</div>
+                </div>
+                <div>
+                  <div style="margin-bottom:6px">00:00:21.500 · 1.0x · 步进 0.25s</div>
+                  <div class="timeline">
+                    <div>T0</div>
+                    <div class="track"><span class="seg" style="left:8%;width:2%;background:#38bdf8"></span></div>
+                    <div>采食</div>
+                    <div class="track"><span class="seg" style="left:14%;width:48%;background:#22c55e"></span></div>
+                    <div>抬头</div>
+                    <div class="track"><span class="seg" style="left:30%;width:6%;background:#f59e0b"></span><span class="seg" style="left:44%;width:5%;background:#f59e0b"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="mock-side">
+                <div class="tabs-mini" id="resultTabs">
+                  <button class="on" data-rtab="overview">概览</button>
+                  <button data-rtab="labels">7标签</button>
+                  <button data-rtab="timing">时序</button>
+                  <button data-rtab="headup">抬头</button>
+                  <button data-rtab="evidence">证据</button>
+                </div>
+                <div id="rtab-overview">
+                  <div class="kv"><b>等级</b><span>A</span><b>核心结果</b><span class="pill">可评分</span><b>无法观察</b><span>—</span></div>
+                  <p style="margin:8px 0 0;color:var(--muted)">点击轨道块可跳转；证据 Tab 缺项将标红并阻断 G5。</p>
+                </div>
+                <div id="rtab-labels" style="display:none">
+                  <div>平静进食 <span class="pill">命中</span></div>
+                  <div>抬头 <span class="pill">命中</span></div>
+                  <div>拒绝进食 <span class="pill bad">未命中</span></div>
+                </div>
+                <div id="rtab-timing" style="display:none">
+                  <div class="kv"><b>T0</b><span>00:08.000</span><b>开始</b><span>00:12.250</span><b>结束</b><span>00:48.000</span><b>总时长</b><span>29.5s</span></div>
+                </div>
+                <div id="rtab-headup" style="display:none">
+                  <div>#1 00:21.00–00:23.50</div>
+                  <div>#2 00:31.25–00:33.00</div>
+                  <div>次数：2</div>
+                </div>
+                <div id="rtab-evidence" style="display:none">
+                  <div>headup#1 · clip · <span class="pill">完整</span></div>
+                  <div>feed_start · frame · <span class="pill">完整</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="proto-runs" class="proto-view" style="display:none">
+          <div class="mock">
+            <div class="mock-bar"><span>任务中心</span><span>新建：环境预检 / 校准 / 盲测 / 评分</span></div>
+            <div class="card" style="margin:14px">
+              <b>RUN-010 盲测批处理</b> · freeze-0914
+              <div class="progress"><i style="width:30%"></i></div>
+              <div style="font-size:12px;margin-top:6px">12/40 · 成功 10 · 失败 1 · 无法观察 1</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="proto-report" class="proto-view" style="display:none">
+          <div class="mock">
+            <div class="mock-bar"><span>POC 评估报告</span><span>生成 / 预览 / 下载</span></div>
+            <div style="padding:14px;font-size:13px" class="grid cols-2">
+              <div class="card" style="margin:0">A 级 n=40<br/>有效输出 33/40<br/>Macro-F1 —</div>
+              <div class="card" style="margin:0">G4/G5/G6 状态<br/>越界 Top 原因<br/>下一阶段建议（可编辑）</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>MVP 完成定义</h3>
+        <ul>
+          <li>可导入校准/盲测并出覆盖矩阵与越界列表</li>
+          <li>单视频多轨道 + 结果 Tabs + 证据跳转</li>
+          <li>Runs 跟踪 40/40；冻结前真值对算法角色隐藏</li>
+          <li>可导出分层统计报告</li>
+        </ul>
+      </section>
+
+      <!-- ACCEPT -->
+      <section class="panel" id="accept">
+        <h2>验收门槛与指标</h2>
+        <h3>前置门槛 G0–G6</h3>
+        <table>
+          <thead><tr><th>ID</th><th>门槛</th><th>通过条件</th></tr></thead>
+          <tbody>
+            <tr><td>G0</td><td>启动</td><td>校准集、40A、真值裁决、GPU 预检、4Hz、版本冻结完成</td></tr>
+            <tr><td>G1</td><td>合格集</td><td>40 段 A 级满足输入与构成</td></tr>
+            <tr><td>G2</td><td>覆盖</td><td>每标签≥8正/负；抬头事件≥20；≥36正常结束+4右截断</td></tr>
+            <tr><td>G3</td><td>隔离</td><td>预测冻结前算法执行未读真值</td></tr>
+            <tr><td>G4</td><td>记录</td><td>40/40 有结果（含失败）</td></tr>
+            <tr><td>G5</td><td>证据</td><td>100% 预测事件有完整证据</td></tr>
+            <tr><td>G6</td><td>有效输出</td><td>≥32/40 可评分核心结果</td></tr>
+          </tbody>
+        </table>
+        <h3>核心指标（摘要）</h3>
+        <div class="grid cols-2">
+          <div class="card"><b>7 标签</b><br/>每标签 P/R/F1≥0.80；Macro-F1≥0.80；集合/数量一致≥32/40；MAE≤0.5</div>
+          <div class="card"><b>采食时序</b><br/>开始±3s≥32/40；结束±3s≥29/36；总时长阈值≥29/36；右截断4/4</div>
+          <div class="card"><b>抬头</b><br/>P/R/F1≥0.80；边界中位≤0.5s，P90≤1.0s；次数全对≥32/40；IoU≥0.5</div>
+          <div class="card"><b>结论</b><br/>通过 / 不通过 / 测试无效（覆盖或隔离不满足）</div>
+        </div>
+      </section>
+
+      <!-- DELIVER -->
+      <section class="panel" id="deliver">
+        <h2>交付清单</h2>
+        <ul class="check-list" id="deliverList"></ul>
+      </section>
+
+      <!-- KICKOFF -->
+      <section class="panel" id="kickoff">
+        <h2>Kickoff 检查清单</h2>
+        <p class="lead">勾选进度保存在本机 localStorage，刷新不丢失。</p>
+        <div class="card">
+          <div>完成度：<span id="kickPct">0%</span></div>
+          <div class="progress"><i id="kickBar"></i></div>
+        </div>
+        <ul class="check-list" id="kickList"></ul>
+      </section>
+
+      <p class="footer-note">说明：本页为任务发布与对齐材料。若与签署合同/工作说明书冲突，以合同为准。联系人：甲方季兴菲 · 乙方徐秀丽。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const panels = [...document.querySelectorAll('.panel')];
+  const navBtns = [...document.querySelectorAll('.nav button')];
+  function showPanel(id) {
+    panels.forEach(p => p.classList.toggle('active', p.id === id));
+    navBtns.forEach(b => b.classList.toggle('active', b.dataset.panel === id));
+    history.replaceState(null, '', '#' + id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  navBtns.forEach(b => b.addEventListener('click', () => showPanel(b.dataset.panel)));
+  window.showPanel = showPanel;
+  if (location.hash) {
+    const id = location.hash.slice(1);
+    if (document.getElementById(id)) showPanel(id);
+  }
+
+  // proto tabs
+  function switchProto(name) {
+    document.querySelectorAll('.proto-view').forEach(v => v.style.display = 'none');
+    document.getElementById('proto-' + name).style.display = 'block';
+    document.querySelectorAll('#protoTabs button').forEach(b => b.classList.toggle('active', b.dataset.proto === name));
+  }
+  window.switchProto = switchProto;
+  document.querySelectorAll('#protoTabs button').forEach(b => b.addEventListener('click', () => switchProto(b.dataset.proto)));
+
+  document.querySelectorAll('#resultTabs button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#resultTabs button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      ['overview','labels','timing','headup','evidence'].forEach(id => {
+        document.getElementById('rtab-' + id).style.display = (b.dataset.rtab === id) ? 'block' : 'none';
+      });
+    });
+  });
+
+  const deliverables = [
+    '冻结的离线批处理程序与运行配置（含哈希清单）',
+    '盲测视频结构化预测结果（40/40 留痕）',
+    '证据材料（事件级片段/帧与时间戳）',
+    'POC 评估与总结报告（含前端界面能力）',
+    '执行环境与运行记录快照'
+  ];
+  const kickoffs = [
+    '双方项目经理与接口人已确认',
+    'GPU 权限、账号、数据落盘路径已开通',
+    '校准视频 8–12 段已接收并可校验',
+    '40 段 A 级盲测清单、SHA-256、机位与区域标定已齐',
+    '双人真值裁决流程确认；答案隔离机制已宣布',
+    '7 标签与核心事件定义无未决争议',
+    '评分脚本与 IoU=0.50 规则已就绪',
+    '交付目录（程序/结果/证据/报告/环境）已建立'
+  ];
+
+  function bindChecklist(el, items, key) {
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    el.innerHTML = items.map((t,i) => {
+      const checked = !!saved[i];
+      return `<li class="${checked?'todo-done':''}"><input type="checkbox" data-i="${i}" ${checked?'checked':''}/><span>${t}</span></li>`;
+    }).join('');
+    el.addEventListener('change', e => {
+      if (e.target.matches('input[type=checkbox]')) {
+        const i = e.target.dataset.i;
+        const state = JSON.parse(localStorage.getItem(key) || '{}');
+        state[i] = e.target.checked;
+        localStorage.setItem(key, JSON.stringify(state));
+        e.target.closest('li').classList.toggle('todo-done', e.target.checked);
+        if (key === 'poc_kick') updateKickPct();
+      }
+    });
+  }
+  bindChecklist(document.getElementById('deliverList'), deliverables, 'poc_deliver');
+  bindChecklist(document.getElementById('kickList'), kickoffs, 'poc_kick');
+
+  function updateKickPct() {
+    const state = JSON.parse(localStorage.getItem('poc_kick') || '{}');
+    const n = kickoffs.filter((_,i)=>state[i]).length;
+    const pct = Math.round(n / kickoffs.length * 100);
+    document.getElementById('kickPct').textContent = pct + '%';
+    document.getElementById('kickBar').style.width = pct + '%';
+  }
+  updateKickPct();
+</script>
+</body>
+</html>
